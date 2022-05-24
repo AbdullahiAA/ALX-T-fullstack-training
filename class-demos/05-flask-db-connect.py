@@ -1,4 +1,3 @@
-from ast import For
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
@@ -11,6 +10,7 @@ db = SQLAlchemy(app)
 
 class Person(db.Model):
     __tablename__ = 'persons'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False)
 
@@ -30,5 +30,6 @@ def index():
     return "Hi " + person.name
 
 
+# Running the server
 if __name__ == "__main__":
     app.run("0.0.0.0", debug=True)
