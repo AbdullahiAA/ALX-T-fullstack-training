@@ -7,15 +7,52 @@
     <title>Todo App</title>
   </head>
   <body>
-    <form action="/todos/create" method="POST">
-      <input type="text" name="description" />
+    <div class="hidden" id="error" style="display: none">
+      Something went wrong!
+    </div>
+
+    <form id="todoForm">
+      <input type="text" id="description" />
       <input type="submit" value="Add Todo" />
     </form>
 
-    <ul>
+    <ul id="todos">
       {% for d in data %}
       <li>{{ d.description }}</li>
       {% endfor %}
     </ul>
+
+    <script>
+      const todoForm = document.getElementById("todoForm");
+
+      todoForm.onsubmit = function (e) {
+        e.preventDefault();
+
+        const description = document.getElementById("description").value;
+
+        fetch("/todos/create", {
+          method: "POST",
+          body: JSON.stringify({ description: description }),
+          headers: { "Content-Type": "application/json" },
+        })
+          .then((response) => {
+            return response.json();
+          })
+          .then((jsonResponse) => {
+            console.log(jsonResponse);
+
+            const newTodoNode = document.createElement("LI");
+            newTodoNode.innerHTML = jsonResponse["description"];
+
+            document.getElementById("todos").appendChild(newTodoNode);
+            document.getElementById("error").classname = "hidden";
+
+            document.getElementById("description").value = "";
+          })
+          .catch(function () {
+            document.getElementById("error").classname = "";
+          });
+      };
+    </script>
   </body>
 </html>

@@ -1,4 +1,6 @@
-from flask import Flask, redirect, render_template, request, url_for
+from os import abort
+import sys
+from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -22,14 +24,34 @@ db.create_all()
 
 @app.route("/todos/create", methods=['POST'])
 def create_todo():
-    description = request.form['description']
+    # This is used to track when an error occurred
+    error = False
 
-    todo = Todo(description=description)
+    try:
+        # Fetch the description from the request body
+        description = request.get_json()['description']
 
-    db.session.add(todo)
-    db.session.commit()
+        # Instantiate a new Todo object
+        todo = Todo(description=description)
 
-    return redirect(url_for('index'))
+        db.session.add(todo)
+        db.session.commit()
+    except:
+        error = True
+
+        # Roll back the changes
+        db.session.rollback()
+
+        # Print the system execution error
+        print(sys.exc_info())
+    finally:
+        db.session.close()
+
+        # Return the data if there is no error
+        if error:
+            abort(400)
+        else:
+            return jsonify({'description': description})
 
 
 @app.route("/")
