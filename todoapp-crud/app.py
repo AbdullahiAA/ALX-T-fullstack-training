@@ -1,6 +1,6 @@
 from os import abort
 import sys
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -54,10 +54,58 @@ def create_todo():
             return jsonify({'description': description})
 
 
+@app.route("/todos/updateStatus/<todo_id>", methods=['POST'])
+def update_status(todo_id):
+    error = False
+    try:
+        status = request.get_json()['completed']
+
+        todo = Todo.query.get(todo_id)
+        todo.completed = status
+        db.session.commit()
+
+        print(todo)
+    except:
+        error = True
+        print(sys.exc_info())
+        db.session.rollback()
+
+    finally:
+        db.session.close()
+
+        if error:
+            abort(400)
+        else:
+            return jsonify({'completed': status})
+
+
+@app.route("/todos/delete/<todo_id>", methods=['DELETE'])
+def delete_todo(todo_id):
+    error = False
+
+    try:
+        todo = Todo.query.get(todo_id)
+        db.session.delete(todo)
+        db.session.commit()
+
+    except:
+        error = True
+        print(sys.exc_info())
+        db.session.rollback()
+
+    finally:
+        db.session.close()
+
+        if error:
+            abort(400)
+        else:
+            return jsonify({'success': True})
+
+
 @app.route("/")
 def index():
     # Fetch all the todos
-    data = Todo.query.all()
+    data = Todo.query.order_by('id').all()
 
     return render_template('index.html', data=data)
 

@@ -5,11 +5,57 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Todo App</title>
+
+    <style>
+      body {
+        text-align: center;
+        padding: 50px;
+      }
+
+      ul {
+        list-style: none;
+        padding: 20px 0;
+        background-color: burlywood;
+        width: 250px;
+        margin: 10px auto;
+      }
+
+      li {
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      li label {
+        cursor: pointer;
+        background-color: yellow;
+        flex: 1;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      #error {
+        color: red;
+        margin-bottom: 10px;
+      }
+
+      .deleteBtn {
+        -webkit-appearance: none;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        background-color: transparent;
+        color: red;
+        font-size: 18px;
+        font-weight: bolder;
+      }
+    </style>
   </head>
   <body>
-    <div class="hidden" id="error" style="display: none">
-      Something went wrong!
-    </div>
+    <div class="hidden" id="error">Something went wrong!</div>
 
     <form id="todoForm">
       <input type="text" id="description" />
@@ -18,11 +64,29 @@
 
     <ul id="todos">
       {% for d in data %}
-      <li>{{ d.description }}</li>
+      <li>
+        <input
+          id="{{ d.id }}"
+          data-id="{{ d.id }}"
+          class="checkbox"
+          type="checkbox"
+          {%
+          if
+          d.completed
+          %}
+          checked
+          {%
+          endif
+          %}
+        />
+        <label for="{{ d.id }}">{{ d.description }}</label>
+        <button class="deleteBtn" data-id="{{ d.id }}">&cross;</button>
+      </li>
       {% endfor %}
     </ul>
 
     <script>
+      // Process the addition of a new Todo
       const todoForm = document.getElementById("todoForm");
 
       todoForm.onsubmit = function (e) {
@@ -45,14 +109,75 @@
             newTodoNode.innerHTML = jsonResponse["description"];
 
             document.getElementById("todos").appendChild(newTodoNode);
-            document.getElementById("error").classname = "hidden";
+            document.getElementById("error").className = "hidden";
 
             document.getElementById("description").value = "";
+
+            window.location.reload();
           })
           .catch(function () {
-            document.getElementById("error").classname = "";
+            document.getElementById("error").className = "";
           });
       };
+
+      //   Process the edition of the completion status
+      const checkboxes = document.querySelectorAll(".checkbox");
+
+      for (let i = 0; i < checkboxes.length; i++) {
+        const todoItem = checkboxes[i];
+
+        todoItem.onchange = function (e) {
+          const id = e.target.dataset["id"];
+          const status = e.target.checked;
+
+          fetch("/todos/updateStatus/" + id, {
+            method: "POST",
+            body: JSON.stringify({ completed: status }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => {
+              return response.json();
+            })
+            .then((responseJson) => {
+              console.log(responseJson);
+              document.getElementById("error").className = "hidden";
+            })
+            .catch(() => {
+              document.getElementById("error").className = "";
+            });
+        };
+      }
+
+      //   Process the deletion of a Todo
+      const deleteBtns = document.querySelectorAll(".deleteBtn");
+
+      for (let i = 0; i < deleteBtns.length; i++) {
+        const deleteBtn = deleteBtns[i];
+
+        deleteBtn.onclick = function (e) {
+          const id = e.target.dataset["id"];
+
+          fetch("/todos/delete/" + id, {
+            method: "DELETE",
+          })
+            .then((response) => {
+              return response.json();
+            })
+            .then((responseJson) => {
+              console.log(responseJson);
+              document.getElementById("error").className = "hidden";
+
+              const listItem = e.target.parentElement;
+
+              listItem.parentNode.removeChild(listItem);
+            })
+            .catch(() => {
+              document.getElementById("error").className = "";
+            });
+        };
+      }
     </script>
   </body>
 </html>
