@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost:5432/todoappcrud'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -17,8 +18,25 @@ class Todo(db.Model):
     description = db.Column(db.String(), nullable=False)
     completed = db.Column(db.Boolean, nullable=False, default=False)
 
+    # This is a foreign key that references the todoList id
+    todolists_id = db.Column(
+        db.Integer, db.ForeignKey('todolists.id'), nullable=False)
+
     def __repr__(self):
-        return f'<Todo {self.id} {self.description} {self.completed}>'
+        return f'<Todo {self.id} {self.description} {self.completed}, list {self.todolists_id}>'
+
+
+class TodoList(db.Model):
+    __tablename__ = 'todolists'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+
+    # This is what defines the relationship between this table and the todos table
+    todos = db.relationship('Todo', backref="list", lazy=True)
+
+    def __repr__(self):
+        return f'<TodoList {self.id} {self.name}>'
 
 
 @app.route("/todos/create", methods=['POST'])
@@ -53,7 +71,7 @@ def create_todo():
             return jsonify({'description': description})
 
 
-@app.route("/todos/updateStatus/<todo_id>", methods=['POST'])
+@app.route("/todos/updateStatus/<todo_id>", methods=['PUT'])
 def update_status(todo_id):
     error = False
     try:

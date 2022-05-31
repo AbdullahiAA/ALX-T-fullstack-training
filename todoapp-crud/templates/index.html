@@ -131,7 +131,7 @@
           const status = e.target.checked;
 
           fetch("/todos/updateStatus/" + id, {
-            method: "POST",
+            method: "PUT",
             body: JSON.stringify({ completed: status }),
             headers: {
               "Content-Type": "application/json",
