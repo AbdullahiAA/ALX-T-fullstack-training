@@ -6,84 +6,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Todo App</title>
 
-    <style>
-      body {
-        text-align: center;
-        padding: 50px;
-      }
-
-      ul {
-        list-style: none;
-        padding: 20px 0;
-        background-color: burlywood;
-        width: 250px;
-        margin: 10px auto;
-      }
-
-      li {
-        display: flex;
-        gap: 8px;
-        justify-content: space-between;
-        margin-bottom: 10px;
-      }
-
-      li label {
-        cursor: pointer;
-        background-color: yellow;
-        flex: 1;
-      }
-
-      .hidden {
-        display: none;
-      }
-
-      #error {
-        color: red;
-        margin-bottom: 10px;
-      }
-
-      .deleteBtn {
-        -webkit-appearance: none;
-        border: none;
-        outline: none;
-        cursor: pointer;
-        background-color: transparent;
-        color: red;
-        font-size: 18px;
-        font-weight: bolder;
-      }
-    </style>
+    <link rel="stylesheet" href="../static/css/style.css" />
   </head>
   <body>
-    <div class="hidden" id="error">Something went wrong!</div>
+    <div class="container">
+      <div class="listsWrapper">
+        <h2>Categories</h2>
 
-    <form id="todoForm">
-      <input type="text" id="description" />
-      <input type="submit" value="Add Todo" />
-    </form>
+        <div class="hidden error" id="listError">Something went wrong!</div>
 
-    <ul id="todos">
-      {% for d in data %}
-      <li>
-        <input
-          id="{{ d.id }}"
-          data-id="{{ d.id }}"
-          class="checkbox"
-          type="checkbox"
-          {%
-          if
-          d.completed
-          %}
-          checked
-          {%
-          endif
-          %}
-        />
-        <label for="{{ d.id }}">{{ d.description }}</label>
-        <button class="deleteBtn" data-id="{{ d.id }}">&cross;</button>
-      </li>
-      {% endfor %}
-    </ul>
+        <form id="listsForm">
+          <input type="text" id="name" />
+          <input type="submit" value="Add List" />
+        </form>
+
+        <ul id="lists">
+          {% if not lists %}
+          <li>Category list is empty...</li>
+          {% endif %}
+
+          <!-- Todo Category -->
+          {% for list in lists %}
+          <li>
+            <input id="{{ list.id }}" data-id="{{ list.id }}" class="checkbox"
+            type="checkbox" {% if (list.id == active_list.id) %} checked {%
+            endif %} disabled />
+            <label for="{{ list.id }}">
+              <a href="/lists/{{ list.id }}">{{ list.name }}</a>
+            </label>
+            <button class="deleteListBtn" data-id="{{ list.id }}">
+              &cross;
+            </button>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="todosWrapper">
+        <h2>{{ active_list.name }} Todos</h2>
+
+        <div class="hidden error" id="error">Something went wrong!</div>
+
+        <form id="todoForm">
+          <input type="text" id="description" />
+          <input type="submit" value="Add Todo" />
+        </form>
+
+        <ul id="todos">
+          {% if not todos %}
+          <li>This list is empty...</li>
+          {% endif %}
+
+          <!-- Todo Items -->
+          {% for todo in todos %}
+          <li>
+            <input
+              id="{{ todo.id }}"
+              data-id="{{ todo.id }}"
+              class="checkbox"
+              type="checkbox"
+              {%
+              if
+              todo.completed
+              %}
+              checked
+              {%
+              endif
+              %}
+            />
+            <label for="{{ todo.id }}">{{ todo.description }}</label>
+            <button class="deleteBtn" data-id="{{ todo.id }}">&cross;</button>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
 
     <script>
       // Process the addition of a new Todo
@@ -96,7 +93,10 @@
 
         fetch("/todos/create", {
           method: "POST",
-          body: JSON.stringify({ description: description }),
+          body: JSON.stringify({
+            description: description,
+            todolists_id: "{{ active_list.id }}",
+          }),
           headers: { "Content-Type": "application/json" },
         })
           .then((response) => {
@@ -116,7 +116,7 @@
             window.location.reload();
           })
           .catch(function () {
-            document.getElementById("error").className = "";
+            document.getElementById("error").className = "error";
           });
       };
 
@@ -175,6 +175,71 @@
             })
             .catch(() => {
               document.getElementById("error").className = "";
+            });
+        };
+      }
+
+      // Process the addition of a new List
+      const listsForm = document.getElementById("listsForm");
+
+      listsForm.onsubmit = function (e) {
+        e.preventDefault();
+
+        const name = document.getElementById("name").value;
+
+        fetch("/lists/create", {
+          method: "POST",
+          body: JSON.stringify({ name: name }),
+          headers: { "Content-Type": "application/json" },
+        })
+          .then((response) => {
+            return response.json();
+          })
+          .then((jsonResponse) => {
+            console.log(jsonResponse);
+
+            const newListNode = document.createElement("LI");
+            newListNode.innerHTML = jsonResponse["name"];
+
+            document.getElementById("lists").appendChild(newListNode);
+            document.getElementById("listError").className = "hidden";
+
+            document.getElementById("name").value = "";
+
+            window.location.reload();
+          })
+          .catch(function () {
+            document.getElementById("listError").className = "error";
+          });
+      };
+
+      //   Process the deletion of a Todo
+      const deleteListBtns = document.querySelectorAll(".deleteListBtn");
+
+      for (let i = 0; i < deleteListBtns.length; i++) {
+        const deleteListBtn = deleteListBtns[i];
+
+        deleteListBtn.onclick = function (e) {
+          const id = e.target.dataset["id"];
+
+          fetch("/lists/delete/" + id, {
+            method: "DELETE",
+          })
+            .then((response) => {
+              return response.json();
+            })
+            .then((responseJson) => {
+              console.log(responseJson);
+              document.getElementById("listError").className = "hidden";
+
+              const listItem = e.target.parentElement;
+
+              listItem.parentNode.removeChild(listItem);
+
+              window.location.reload();
+            })
+            .catch(() => {
+              document.getElementById("listError").className = "error";
             });
         };
       }

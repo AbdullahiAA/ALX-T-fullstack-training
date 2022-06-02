@@ -1,0 +1,59 @@
+body {
+  text-align: center;
+  padding: 50px;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  display: flex;
+  gap: 20px;
+}
+
+ul {
+  list-style: none;
+  padding: 20px 10px;
+  background-color: burlywood;
+  width: 250px;
+  margin: 10px auto;
+}
+
+li {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+li label {
+  cursor: pointer;
+  background-color: yellow;
+  flex: 1;
+}
+
+li button {
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  background-color: transparent;
+  color: red;
+  font-size: 18px;
+  font-weight: bolder;
+}
+
+a {
+  text-decoration: none;
+  color: initial;
+  display: block;
+  height: 100%;
+}
+
+.hidden {
+  display: none;
+}
+
+.error {
+  color: red;
+  margin-bottom: 10px;
+}
