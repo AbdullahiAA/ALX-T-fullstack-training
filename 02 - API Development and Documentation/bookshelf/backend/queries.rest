@@ -1,0 +1,17 @@
+PATCH http://127.0.0.1:5000/books/100
+Content-Type: application/json
+
+{
+    "rating": 2
+}
+
+###
+
+POST http://127.0.0.1:5000/books/89
+Content-Type: application/json
+
+{
+    "title": "Anansi Boys",
+    "author": "Neil Gaiman",
+    "rating": 5
+}
