@@ -78,6 +78,9 @@ def create_app(test_config=None):
             if book is None:
                 abort(404)
 
+            if body.get("rating") is None:
+                abort(400)
+
             if "rating" in body:
                 book.rating = int(body.get("rating"))
 
@@ -130,6 +133,9 @@ def create_app(test_config=None):
         new_rating = body.get("rating", None)
 
         try:
+            if new_title == None or new_author == None or new_rating == None:
+                abort(400)
+
             book = Book(title=new_title, author=new_author, rating=new_rating)
             book.insert()
 
@@ -143,10 +149,10 @@ def create_app(test_config=None):
                     "books": current_books,
                     "total_books": len(Book.query.all()),
                 }
-            )
+            ), 201
 
         except:
-            abort(422)
+            abort(400)
 
     @app.errorhandler(404)
     def not_found(error):
@@ -171,5 +177,13 @@ def create_app(test_config=None):
             "error": 400,
             "message": "bad request"
         }), 400
+
+    @app.errorhandler(405)
+    def not_allowed(error):
+        return jsonify({
+            "success": False,
+            "error": 405,
+            "message": "method not allowed"
+        }), 405
 
     return app
