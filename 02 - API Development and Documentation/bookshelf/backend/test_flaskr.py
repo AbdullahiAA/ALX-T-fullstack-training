@@ -128,7 +128,7 @@ class BookTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'bad request')
 
-    def test_400_creating_a_new_book_with_no_data(self):
+    def test_400_creating_a_new_book_via_invalid_route(self):
         res = self.client().post('/books/21', json={**self.new_book})
         data = json.loads(res.data)
 
